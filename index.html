@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROTEC SEGUROS - Sistema de Gestión de Oficina</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 0; color: #0f172a; }
+        
+        /* PANTALLA DE LOGIN */
+        .login-overlay { position: fixed; inset: 0; background: #0f172a; display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .login-card { background: #ffffff; padding: 32px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; }
+        .login-card .logo-login { background: #000000; color: #ffffff; font-size: 24px; font-weight: 900; padding: 10px 20px; border-radius: 6px; display: inline-block; margin-bottom: 12px; letter-spacing: 1px; }
+        .login-card h2 { margin: 0 0 6px 0; font-size: 18px; color: #1e293b; }
+        .login-card p { margin: 0 0 20px 0; font-size: 13px; color: #64748b; }
+        .form-group { text-align: left; margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; color: #334155; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: #1d4ed8; }
+        .btn-login { width: 100%; background: #000000; color: #ffffff; border: none; padding: 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-login:hover { background: #1e293b; }
+        .error-msg { color: #dc2626; font-size: 12px; margin-top: 10px; display: none; font-weight: bold; }
+
+        /* PANEL PRINCIPAL */
+        .app-container { display: none; max-width: 1280px; margin: 0 auto; padding: 20px; }
+        .top-bar { background: #ffffff; padding: 16px 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px; }
+        .top-bar .brand-section { display: flex; align-items: center; gap: 12px; }
+        .top-bar .logo-dash { background: #000000; color: #ffffff; font-weight: 900; font-size: 20px; padding: 6px 14px; border-radius: 6px; }
+        .top-bar .user-badge { background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: bold; padding: 6px 12px; border-radius: 20px; border: 1px solid #bae6fd; }
+        .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-add { background: #1d4ed8; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-add:hover { background: #1e40af; }
+
+        /* LISTA DE REGISTROS */
+        .card { background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; overflow: hidden; }
+        .card-header { background: #f8fafc; padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .card-header h2 { margin: 0; font-size: 15px; font-weight: 600; color: #334155; }
+        
+        .row { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #f1f5f9; gap: 12px; flex-wrap: wrap; }
+        .row:hover { background-color: #f8fafc; }
+        
+        .col-client { flex: 2; min-width: 170px; }
+        .col-client .name { font-weight: 700; font-size: 15px; color: #0f172a; }
+        .col-client .phone { font-size: 13px; color: #64748b; margin-top: 2px; }
+        
+        .col-comp { flex: 1.5; min-width: 130px; }
+        .col-comp .comp-name { font-size: 13px; font-weight: 700; color: #000000; }
+        .col-comp .poliza { font-size: 12px; color: #64748b; }
+
+        .col-ramo { flex: 1.5; min-width: 130px; }
+        .col-ramo .ramo-title { font-size: 13px; font-weight: 700; color: #334155; }
+        .col-ramo .vehiculo { font-size: 12px; color: #64748b; }
+        
+        .col-patente { flex: 1; min-width: 90px; }
+        .badge-patente { background: #1e293b; color: #ffffff; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px; font-family: monospace; display: inline-block; }
+
+        .col-monto { flex: 1; font-size: 16px; font-weight: 700; color: #0f172a; min-width: 85px; }
+        .col-fecha { flex: 1; font-size: 13px; color: #475569; min-width: 85px; }
+        .col-venc { flex: 1; min-width: 95px; }
+        .badge-vencido { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px; display: inline-block; }
+        
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn { border: none; padding: 7px 11px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-efectivo { background: #065f46; color: white; }
+        .btn-mp { background: #0284c7; color: white; }
+        .btn-ws { background: #22c55e; color: white; }
+        .btn-recibo { background: #ffffff; border: 1px solid #000; color: #000; font-weight: bold; }
+        .btn:hover { opacity: 0.9; }
+
+        /* MODALES */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; padding: 20px; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; max-width: 800px; width: 100%; position: relative; border: 2px solid #000; }
+        .close-btn { position: absolute; top: 8px; right: 14px; font-size: 24px; cursor: pointer; color: #000; font-weight: bold; }
+
+        /* FORMULARIO NUEVO CLIENTE */
+        .modal-form { max-width: 600px; border: 1px solid #cbd5e1; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+        @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+        /* ESTILOS RECIBO OFICIAL REPLICA (SIN GASTOS ADMINISTRATIVOS) */
+        .recibo-box { border: 2px solid #000; padding: 12px; background: #fff; color: #000; font-size: 12px; }
+        .recibo-top { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .recibo-logo-sec h2 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+        .recibo-logo-sec span { font-size: 11px; font-weight: bold; display: block; }
+        .recibo-tipo-x { border: 2px solid #000; font-weight: 900; font-size: 22px; padding: 2px 12px; align-self: flex-start; }
+        .recibo-sucursal { text-align: center; font-size: 11px; line-height: 1.3; }
+        .recibo-num-sec { text-align: right; }
+        .recibo-num-sec h3 { margin: 0; font-size: 11px; text-transform: uppercase; }
+        .recibo-num-sec .num { font-size: 18px; font-weight: bold; margin: 4px 0; }
+        
+        .recibo-linea { border-bottom: 1px dashed #000; padding: 6px 0; font-size: 13px; margin-bottom: 4px; }
+        
+        .recibo-tabla { width: 100%; border-collapse: collapse; margin: 10px 0; border: 2px solid #000; }
+        .recibo-tabla th { border: 1px solid #000; background: #f0f0f0; padding: 6px; font-size: 10px; text-align: center; font-weight: bold; }
+        .recibo-tabla td { border: 1px solid #000; padding: 8px; font-size: 11px; text-align: center; font-weight: bold; }
+        
+        .recibo-bottom { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+        .recibo-legales { font-size: 8px; width: 50%; line-height: 1.1; text-align: justify; }
+        .recibo-totales { width: 45%; }
+        .recibo-totales table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+        .recibo-totales td { border: 1px solid #000; padding: 6px; font-size: 11px; font-weight: bold; }
+        
+        .sello-pagado { border: 2px solid #000; text-align: center; padding: 6px; margin-top: 8px; font-weight: 900; font-size: 15px; background: #f8f8f8; text-transform: uppercase; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #modalRecibo, #modalRecibo * { visibility: visible; }
+            #modalRecibo { position: absolute; left: 0; top: 0; width: 100%; padding: 0; background: #fff; }
+            .modal-content { border: none; width: 100%; max-width: 100%; }
+            .close-btn, .btn-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE ACCESO (LOGIN) -->
+    <div id="loginScreen" class="login-overlay">
+        <div class="login-card">
+            <div class="logo-login">PROTEC</div>
+            <h2>Acceso a Sucursal</h2>
+            <p>Ingrese su usuario y contraseña asignada</p>
+            
+            <div class="form-group">
+                <label>Sucursal / Usuario</label>
+                <select id="userSelect">
+                    <option value="lareja">Sucursal La Reja</option>
+                    <option value="libertad">Sucursal Libertad</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="passwordInput" placeholder="••••••••">
+            </div>
+
+            <button class="btn-login" onclick="iniciarSesion()">Iniciar Sesión</button>
+            <div id="errorMsg" class="error-msg">Contraseña incorrecta</div>
+        </div>
+    </div>
+
+    <!-- PANEL PRINCIPAL -->
+    <div id="appScreen" class="app-container">
+        <!-- Barra Superior -->
+        <div class="top-bar">
+            <div class="brand-section">
+                <div class="logo-dash">PROTEC</div>
+                <div>
+                    <h1 style="margin:0; font-size:18px;">Control de Vencimientos y Pagos</h1>
+                    <span id="officeTitle" style="font-size:12px; color:#64748b; font-weight:bold;">Sucursal La Reja</span>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button class="btn-add" onclick="abrirModalNuevoCliente()">➕ Cargar Nuevo Cliente / Póliza</button>
+                <span class="user-badge" id="userBadge">Usuario: La Reja</span>
+                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Tabla de Registros -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Listado de Próximos Vencimientos</h2>
+                <span style="font-size:12px; font-weight:bold; color:#1e40af; background:#dbeafe; padding:4px 10px; border-radius:20px;" id="registrosCount">0 registros</span>
+            </div>
+
+            <div id="listaClientes">
+                <!-- Se cargan dinámicamente mediante JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA CARGAR NUEVO CLIENTE -->
+    <div id="modalNuevoCliente" class="modal">
+        <div class="modal-content modal-form">
+            <span class="close-btn" onclick="cerrarModalNuevoCliente()">&times;</span>
+            <h2 style="margin-top:0; color:#0f172a; font-size:18px; border-bottom:1px solid #cbd5e1; padding-bottom:10px;">➕ Registrar Nuevo Cliente / Póliza</h2>
+            
+            <form id="formCliente" onsubmit="guardarCliente(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre y Apellido del Cliente *</label>
+                        <input type="text" id="fNombre" placeholder="Ej: DEL VALLE, RAMON" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono (WhatsApp) *</label>
+                        <input type="text" id="fTelefono" placeholder="Ej: 1157272981" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Compañía Aseguradora *</label>
+                        <input type="text" id="fCompania" placeholder="Ej: AGROSALTA" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Número de Póliza *</label>
+                        <input type="text" id="fPoliza" placeholder="Ej: 8570935" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ramo / Vehículo (Marca y Modelo) *</label>
+                        <input type="text" id="fVehiculo" placeholder="Ej: URBAN / Toyota Hilux" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Patente *</label>
+                        <input type="text" id="fPatente" placeholder="Ej: EMK 203" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto Cuota ($) *</label>
+                        <input type="number" id="fMonto" placeholder="Ej: 50000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cuota N° *</label>
+                        <input type="text" id="fCuota" placeholder="Ej: 2" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Vencimiento *</label>
+                        <input type="date" id="fFechaVenc" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cobertura</label>
+                        <input type="text" id="fCobertura" placeholder="Ej: A - RC" value="B - Terceros Completo">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" style="background:#1d4ed8; margin-top:16px;">💾 Guardar Cliente en el Panel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL RECIBO REPLICA EXACTA (SIN GASTOS ADMINISTRATIVOS) -->
+    <div id="modalRecibo" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarRecibo()">&times;</span>
+            
+            <div class="recibo-box">
+                <!-- Encabezado -->
+                <div class="recibo-top">
+                    <div class="recibo-logo-sec">
+                        <h2>PROTEC</h2>
+                        <span>SEGUROS</span>
+                        <div style="font-size:8px; margin-top:2px;">LIDER EN ZONA OESTE<br>MERLO - LA REJA - GRAL. RODRIGUEZ</div>
+                    </div>
+                    <div class="recibo-tipo-x">X</div>
+                    <div class="recibo-sucursal" id="reciboSucursalInfo">
+                        <strong>SUCURSAL LA REJA</strong>
+                        AV. STORNI 1301/1<br>
+                        (1744) - LA REJA - BUENOS AIRES<br>
+                        CEL.: 11 5727 2981
+                    </div>
+                    <div class="recibo-num-sec">
+                        <h3>RECIBO POR CUENTA Y ORDEN DE TERCEROS</h3>
+                        <div class="num" id="rNum">N° 00002316</div>
+                        <div style="font-size:11px;"><span id="rLugar">LA REJA</span>, <span id="rFecha">05/10/2026</span></div>
+                        <div style="font-size:9px; color:#555;">Lugar y Fecha</div>
+                    </div>
+                </div>
+
+                <!-- Datos Cliente y Monto en Letras -->
+                <div class="recibo-linea">
+                    Recibimos de: <strong id="rCliente">-</strong>
+                </div>
+                <div class="recibo-linea">
+                    La suma de Pesos: <strong id="rMontoLetras">-</strong>
+                </div>
+                <div style="font-size:10px; margin:4px 0 8px 0; font-style:italic;">
+                    Para ser aplicados al pago de las operaciones que se indican en las liquidaciones más abajo detalladas.
+                </div>
+
+                <!-- Tabla Liquidación -->
+                <table class="recibo-tabla">
+                    <thead>
+                        <tr>
+                            <th>CUOTA N°</th>
+                            <th>PROPUESTA / PATENTE</th>
+                            <th>PÓLIZA N°</th>
+                            <th>COBERTURA</th>
+                            <th>$ / U$S</th>
+                            <th>COMPAÑÍA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="rCuota">-</td>
+                            <td id="rPatente">-</td>
+                            <td id="rPoliza">-</td>
+                            <td id="rCobertura">-</td>
+                            <td id="rMontoParcial">$ 0</td>
+                            <td id="rCompania">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Totales y Sello Oficial -->
+                <div class="recibo-bottom">
+                    <div class="recibo-legales">
+                        <strong>Art 1° Res. N° 429/00 Ministerio de Economía</strong><br>
+                        Los Únicos Sistemas habilitados para pagar premios de contratos de seguros son: A) Medios electrónicos. B) Entidades bancarias. C) Tarjeta de crédito/débito.<br><br>
+                        Las entidades aseguradoras sólo podrán considerar cumplida la obligación de pago de premios cuando se produzca el efectivo ingreso de fondos.
+                    </div>
+                    <div class="recibo-totales">
+                        <table>
+                            <tr style="background:#f0f0f0;">
+                                <td style="font-size:13px;">TOTAL ABONADO:</td>
+                                <td id="rTotal" style="text-align:right; font-size:15px; font-weight:bold;">$ 0</td>
+                            </tr>
+                            <tr>
+                                <td>PRÓXIMO VENCIMIENTO:</td>
+                                <td id="rProximoVenc" style="text-align:center; color:#d97706; font-size:12px;">-</td>
+                            </tr>
+                        </table>
+
+                        <div class="sello-pagado">
+                            PROTEC<br>
+                            <span style="font-size:11px; text-decoration:underline;" id="rFechaSello">05/10/2026</span><br>
+                            PAGADO
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+            <button class="btn btn-efectivo btn-print" style="width:100%; justify-content:center; padding:12px; font-size:14px;" onclick="window.print()">
+                🖨️ Imprimir Recibo / Guardar en PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // BASE DE DATOS DE CLIENTES
+        let clientes = [
+            {
+                id: 1,
+                nombre: "DEL VALLE, RAMON",
+                telefono: "1157272981",
+                compania: "AGROSALTA",
+                poliza: "8570935",
+                vehiculo: "URBAN",
+                patente: "EMK 203",
+                monto: 50000,
+                cuota: "2",
+                cobertura: "A - RC",
+                fechaVenc: "2026-10-05",
+                proximoVenc: "06/11/2026"
+            }
+        ];
+
+        // DATOS DE ACCESO SUCURSALES
+        const usuarios = {
+            "lareja": {
+                pass: "lareja2026",
+                nombre: "Sucursal La Reja",
+                direccion: "<strong>SUCURSAL LA REJA</strong><br>AV. STORNI 1301/1<br>(1744) - LA REJA - BUENOS AIRES<br>CEL.: 11 5727 2981",
+                lugar: "LA REJA"
+            },
+            "libertad": {
+                pass: "libertad2026",
+                nombre: "Sucursal Libertad",
+                direccion: "<strong>SUCURSAL LIBERTAD</strong><br>LIBERTAD - BUENOS AIRES",
+                lugar: "LIBERTAD"
+            }
+        };
+
+        let usuarioActual = null;
+
+        function iniciarSesion() {
+            const userKey = document.getElementById("userSelect").value;
+            const passInput = document.getElementById("passwordInput").value;
+            const errorMsg = document.getElementById("errorMsg");
+
+            if (usuarios[userKey] && usuarios[userKey].pass === passInput) {
+                usuarioActual = usuarios[userKey];
+                errorMsg.style.display = "none";
+                
+                document.getElementById("loginScreen").style.display = "none";
+                document.getElementById("appScreen").style.display = "block";
+                document.getElementById("officeTitle").innerText = usuarioActual.nombre;
+                document.getElementById("userBadge").innerText = "Usuario: " + usuarioActual.nombre;
+                
+                renderizarClientes();
+            } else {
+                errorMsg.style.display = "block";
+            }
+        }
+
+        function cerrarSesion() {
+            document.getElementById("passwordInput").value = "";
+            document.getElementById("appScreen").style.display = "none";
+            document.getElementById("loginScreen").style.display = "flex";
+            usuarioActual = null;
+        }
+
+        function renderizarClientes() {
+            const contenedor = document.getElementById("listaClientes");
+            document.getElementById("registrosCount").innerText = `${clientes.length} registro(s) cargado(s)`;
+            contenedor.innerHTML = "";
+
+            clientes.forEach(item => {
+                const fila = document.createElement("div");
+                fila.className = "row";
+
+                const hoy = new Date();
+                const venc = new Date(item.fechaVenc);
+                const diffTime = venc - hoy;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let textoVenc = diffDays <= 0 ? "● HOY / VENCIDO" : `● En ${diffDays} días`;
+
+                fila.innerHTML = `
+                    <div class="col-client">
+                        <div class="name">${item.nombre}</div>
+                        <div class="phone">📱 ${item.telefono}</div>
+                    </div>
+                    <div class="col-comp">
+                        <div class="comp-name">${item.compania}</div>
+                        <div class="poliza">Pól: ${item.poliza}</div>
+                    </div>
+                    <div class="col-ramo">
+                        <div class="ramo-title">${item.vehiculo}</div>
+                        <div class="vehiculo">Cuota N° ${item.cuota}</div>
+                    </div>
+                    <div class="col-patente">
+                        <span class="badge-patente">${item.patente}</span>
+                    </div>
+                    <div class="col-monto">$${Number(item.monto).toLocaleString('es-AR')}</div>
+                    <div class="col-fecha">${item.fechaVenc.split('-').reverse().join('/')}</div>
+                    <div class="col-venc"><span class="badge-vencido">${textoVenc}</span></div>
+                    <div class="actions">
+                        <button class="btn btn-efectivo" onclick="alert('Cobro en Efectivo registrado para ${item.nombre}')">Efectivo</button>
+                        <button class="btn btn-mp" onclick="alert('Cobro por Mercado Pago registrado para ${item.nombre}')">MP</button>
+                        <a href="https://wa.me/549${item.telefono}?text=Hola%20${encodeURIComponent(item.nombre)},%20te%20recordamos%20que%20tu%20cuota%20de%20${encodeURIComponent(item.compania)}%20vence%20el%20${item.fechaVenc.split('-').reverse().join('/')}." target="_blank" class="btn btn-ws">WhatsApp</a>
+                        <button class="btn btn-recibo" onclick="prepararRecibo(${item.id})">📄 Recibo</button>
+                    </div>
+                `;
+                contenedor.appendChild(fila);
+            });
+        }
+
+        function abrirModalNuevoCliente() {
+            document.getElementById("modalNuevoCliente").style.display = "flex";
+        }
+
+        function cerrarModalNuevoCliente() {
+            document.getElementById("modalNuevoCliente").style.display = "none";
+        }
+
+        function guardarCliente(e) {
+            e.preventDefault();
+
+            const nuevoCliente = {
+                id: Date.now(),
+                nombre: document.getElementById("fNombre").value.toUpperCase(),
+                telefono: document.getElementById("fTelefono").value,
+                compania: document.getElementById("fCompania").value.toUpperCase(),
+                poliza: document.getElementById("fPoliza").value,
+                vehiculo: document.getElementById("fVehiculo").value,
+                patente: document.getElementById("fPatente").value.toUpperCase(),
+                monto: document.getElementById("fMonto").value,
+                cuota: document.getElementById("fCuota").value,
+                cobertura: document.getElementById("fCobertura").value,
+                fechaVenc: document.getElementById("fFechaVenc").value,
+                proximoVenc: "30 días post pago"
+            };
+
+            clientes.unshift(nuevoCliente);
+            renderizarClientes();
+            cerrarModalNuevoCliente();
+            document.getElementById("formCliente").reset();
+            alert("¡Cliente " + nuevoCliente.nombre + " cargado con éxito!");
+        }
+
+        function prepararRecibo(id) {
+            const item = clientes.find(c => c.id === id);
+            if(!item) return;
+
+            const numRecibo = "N° 0000" + Math.floor(2000 + Math.random() * 8000);
+            const fechaHoy = new Date().toLocaleDateString('es-AR');
+
+            document.getElementById("reciboSucursalInfo").innerHTML = usuarioActual ? usuarioActual.direccion : usuarios["lareja"].direccion;
+            document.getElementById("rLugar").innerText = usuarioActual ? usuarioActual.lugar : "LA REJA";
+
+            document.getElementById("rNum").innerText = numRecibo;
+            document.getElementById("rFecha").innerText = fechaHoy;
+            document.getElementById("rFechaSello").innerText = fechaHoy;
+            document.getElementById("rCliente").innerText = item.nombre;
+            document.getElementById("rMontoLetras").innerText = item.monto + " PESOS ----------------------------------------------------";
+            document.getElementById("rCuota").innerText = item.cuota;
+            document.getElementById("rPatente").innerText = item.patente + " / " + item.vehiculo;
+            document.getElementById("rPoliza").innerText = item.poliza;
+            document.getElementById("rCobertura").innerText = item.cobertura;
+            document.getElementById("rMontoParcial").innerText = "$ " + Number(item.monto).toLocaleString('es-AR');
+            document.getElementById("rCompania").innerText = item.compania;
+            document.getElementById("rTotal").innerText = "$ " + Number(item.monto).toLocaleString('es-AR');
+            document.getElementById("rProximoVenc").innerText = item.proximoVenc;
+
+            document.getElementById("modalRecibo").style.display = "flex";
+        }
+
+        function cerrarRecibo() {
+            document.getElementById("modalRecibo").style.display = "none";
+        }
+    </script>
+</body>
+</html>
